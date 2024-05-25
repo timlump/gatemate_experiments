@@ -396,3 +396,27 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+# FPGA stuff
+*.log
+*_synth.v
+*.history
+*.refwire
+*.refparam
+*.refcomp
+*.pos
+*.pathes
+*.path_struc
+*.net
+*.id
+*.prn
+*_00.v
+*.used
+*.sdf
+*.place
+*.pin
+*.cfg*
+*.cdf
+*.vcd
+*.vvp
+*.gtkw

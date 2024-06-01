@@ -420,3 +420,4 @@ FodyWeavers.xsd
 *.vcd
 *.vvp
 *.gtkw
+lut*.txt

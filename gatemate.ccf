@@ -1,5 +1,0 @@
-Pin_in  "CLK"    Loc = "IO_SB_A8" | SCHMITT_TRIGGER=true;
-Pin_in  "RESET"  Loc = "IO_SB_B7";
-Pin_out "LED"    Loc = "IO_SB_B6";
-Pin_out "TX"     Loc = "IO_SA_B6";
-Pin_in  "RX"     Loc = "IO_SA_A6";

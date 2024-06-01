@@ -12,10 +12,10 @@ synth: $(VLOG_SRC)
 	$(YOSYS) -qql log/synth.log -p 'read -sv $^; synth_gatemate -top $(TOP) -nomx8 -vlog net/$(TOP)_synth.v'
 
 impl:
-	$(PR) -i net/$(TOP)_synth.v -o $(TOP) -ccf gatemate.ccf -cCP > log/$@.log
+	$(PR) -i net/$(TOP)_synth.v -o $(TOP) $(PRFLAGS) > log/$@.log
 
 jtag:
-	$(OFL)-c dirtyJtag $(TOP)_00.cfg
+	$(OFL) -c dirtyJtag $(TOP)_00.cfg
 
 clean:
 	$(RM) log/*.log

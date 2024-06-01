@@ -1,13 +1,22 @@
 module risc_v (
-    input clk,
-    output led
+    input CLK,
+    output LED
 );
 
-reg [26:0] count = 0;
-always @(posedge clk) begin
-    count <= count + 1;
-end
+    wire clk;    // internal clock
 
-assign led = count[26];
+    reg count = 0;
+    always @(posedge clk) begin
+        count <= count + 1;
+    end
+
+    assign LED = count;
+
+    Clockworks #(
+        .SLOW(21) // divide clock frequency by 2^21
+    )CW(
+        .CLK(CLK),
+        .clk(clk)
+    );
 
 endmodule

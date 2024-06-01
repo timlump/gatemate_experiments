@@ -1,2 +1,3 @@
-Pin_in  "clk"    Loc = "IO_SB_A8" | SCHMITT_TRIGGER=true;
-Pin_out "led"    Loc = "IO_SB_B6";
+Pin_in  "CLK"    Loc = "IO_SB_A8" | SCHMITT_TRIGGER=true;
+Pin_out "LED"    Loc = "IO_SB_B6";
+Pin_out "RESET"  Loc = "IO_SB_B7";

@@ -92,14 +92,43 @@ module risc_v (
         MEM[7] = 32'b000000000001_00000_000_00000_1110011;
     end
 
+    reg [31:0] RegisterBank [0:31];
+    wire [31:0] writeBackData = 0;
+    wire writeBackEn = 0;
+    reg [31:0] rs1;
+    reg [31:0] rs2;
+
+    // state machine to control the cpu pipeline
+    localparam FETCH_INSTR = 0;
+    localparam FETCH_REGS  = 1;
+    localparam EXECUTE     = 2;
+    reg [1:0] state = FETCH_INSTR;
+
     always @(posedge clk) begin
-        LED <= MEM[PC][4];
-        if (!isSYSTEM) begin
-            PC <= PC+1;
+        case(state)
+            FETCH_INSTR: begin
+                instr <= MEM[PC];
+                state <= FETCH_REGS;
+            end
+            FETCH_REGS: begin
+                rs1 <= RegisterBank[rs1Id];
+                rs2 <= RegisterBank[rs2Id];
+                state <= EXECUTE;
+            end
+            EXECUTE: begin
+                PC <= PC + 1;
+                state <= FETCH_INSTR;
+            end
+        endcase
+    end
+
+    always @(posedge clk) begin
+        if (writeBackEn && rdId != 0) begin // register 0 can never be written to in risc-v
+            RegisterBank[rdId] <= writeBackData;
         end
     end
 
-    assign LED = count;
+    assign LED = state[0];
 
     Clockworks #(
         .SLOW(21) // divide clock frequency by 2^21

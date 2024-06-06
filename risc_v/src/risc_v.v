@@ -128,6 +128,27 @@ module risc_v (
         end
     end
 
+    // ALU code
+    wire [31:0] aluIn1 = rs1;
+    wire [31:0] aluIn2 = isALUreg ? rs2 : Iimm;
+    reg [31:0] aluOut;
+    wire [4:0] shamt = isALUreg ? rs2[4:0] : instr[24:20]; // shift amount
+    always @(*) begin
+        case (funct3)
+            3'b000: aluOut = (funct7[5] & instr[5]) ? (aluIn1 - aluIn2) : (aluIn1+aluIn2);
+            3'b001: aluOut = aluIn1 << shamt;
+            3'b010: aluOut = ($signed(aluIn1) < $signed(aluIn2));
+            3'b011: aluOut = (aluIn1 < aluIn2);
+            3'b100: aluOut = (aluIn1 ^ aluIn2);
+            3'b101: aluOut = funct7[5]? ($signed(aluIn1) >>> shamt) : (aluIn1 >> shamt);
+            3'b110: aluOut = (aluIn1 | aluIn2);
+            3'b111: aluOut = (aluIn1 & aluIn2);
+        endcase
+    end
+
+    assign writeBackData = aluOut;
+    assign writeBackEn = (state == EXECUTE && (isALUreg || isALUimm));
+
     assign LED = state[0];
 
     Clockworks #(

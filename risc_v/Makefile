@@ -1,4 +1,4 @@
 include ../config.mk
 
-PRFLAGS += -ccf src/$(TOP).ccf -cCP
+PRFLAGS += -ccf ../gatemate_pindef.ccf -cCP
 TOP = risc_v

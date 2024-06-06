@@ -4,6 +4,9 @@ YOSYS = $(BIN_HOME)/yosys/yosys
 PR = $(BIN_HOME)/p_r/p_r
 OFL = openFPGALoader
 
+IVL = iverilog
+VVP = vvp
+
 RM = rm -rf
 
 VLOG_SRC = $(shell find ./src/ -type f \( -iname \*.v -o -iname \*.sv \))
@@ -16,6 +19,10 @@ impl:
 
 jtag:
 	$(OFL) -c dirtyJtag $(TOP)_00.cfg
+
+test: $(VLOG_SRC)
+	$(IVL) -DBENCH ../bench.v $^ -o sim/a.out
+	$(VVP) sim/a.out
 
 clean:
 	$(RM) log/*.log
@@ -38,6 +45,4 @@ clean:
 	$(RM) *.pin
 	$(RM) *.cfg*
 	$(RM) *.cdf
-	$(RM) sim/*.vcd
-	$(RM) sim/*.vvp
-	$(RM) sim/*.gtkw
+	$(RM) sim/*.out

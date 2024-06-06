@@ -421,3 +421,4 @@ FodyWeavers.xsd
 *.vvp
 *.gtkw
 lut*.txt
+*.out

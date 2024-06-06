@@ -1,10 +1,10 @@
 module Clockworks
 (
     input CLK,    // clock pin of the board
-    output clk,
+    output clk
 );
 
-    parameter SLOW;
+    parameter SLOW = 0;
 
     reg [SLOW:0] slow_CLK = 0;
     always @(posedge CLK) begin

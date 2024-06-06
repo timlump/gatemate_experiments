@@ -1,3 +1,10 @@
 # gatemate_experiments
 
-RISC_V: Based on https://github.com/BrunoLevy/learn-fpga/blob/master/FemtoRV/TUTORIALS/FROM_BLINKER_TO_RISCV/README.md
+**RISC_V**: 
+
+Based on https://github.com/BrunoLevy/learn-fpga/blob/master/FemtoRV/TUTORIALS/FROM_BLINKER_TO_RISCV/README.md
+
+Assumes you have the olimex gatemate evaluation board:
+https://www.olimex.com/Products/FPGA/GateMate/GateMateA1-EVB/open-source-hardware
+
+The ultimate plan is to implement a basic 32 bit risc-v computer that can run doom via vga, controlled by ps/2 keyboard.

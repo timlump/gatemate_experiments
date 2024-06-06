@@ -8,3 +8,12 @@ Assumes you have the olimex gatemate evaluation board:
 https://www.olimex.com/Products/FPGA/GateMate/GateMateA1-EVB/open-source-hardware
 
 The ultimate plan is to implement a basic 32 bit risc-v computer that can run doom via vga, controlled by ps/2 keyboard.
+
+## Instructions
+
+You'll need to download the linux toolchain from cologne chip: https://www.colognechip.com/programmable-logic/gatemate/gatemate-download/ and modify the config.mk BIN_HOME to environment variable to point to the cc-toolchain-linux/bin folder.
+
+You should also install iverilog, vvp and openFPGALoader via apt:
+```
+sudo apt install iverilog vvp openFPGALoader
+```

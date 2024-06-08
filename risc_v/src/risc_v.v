@@ -60,36 +60,21 @@ module risc_v (
     
     wire clk;    // internal clock
 
+    `include "../riscv_assembly.v"
     initial begin
-        PC = 0;
-        // add x0, x0, x0
-        //                   rs2   rs1  add  rd   ALUREG
-        instr = 32'b0000000_00000_00000_000_00000_0110011;
-        // add x1, x0, x0
-        //                    rs2   rs1  add  rd  ALUREG
-        MEM[0] = 32'b0000000_00000_00000_000_00001_0110011;
-        // addi x1, x1, 1
-        //             imm         rs1  add  rd   ALUIMM
-        MEM[1] = 32'b000000000001_00001_000_00001_0010011;
-        // addi x1, x1, 1
-        //             imm         rs1  add  rd   ALUIMM
-        MEM[2] = 32'b000000000001_00001_000_00001_0010011;
-        // addi x1, x1, 1
-        //             imm         rs1  add  rd   ALUIMM
-        MEM[3] = 32'b000000000001_00001_000_00001_0010011;
-        // addi x1, x1, 1
-        //             imm         rs1  add  rd   ALUIMM
-        MEM[4] = 32'b000000000001_00001_000_00001_0010011;
-        // lw x2,0(x1)
-        //             imm         rs1   w   rd   LOAD
-        MEM[5] = 32'b000000000000_00001_010_00010_0000011;
-        // sw x2,0(x1)
-        //             imm   rs2   rs1   w   imm  STORE
-        MEM[6] = 32'b000000_00010_00001_010_00000_0100011;
-        
-        // ebreak
-        //                                        SYSTEM
-        MEM[7] = 32'b000000000001_00000_000_00000_1110011;
+        ADD(x0,x0,x0);
+        ADD(x1,x0,x0);
+        ADDI(x1,x1,1);
+        ADDI(x1,x1,1);
+        ADDI(x1,x1,1);
+        ADDI(x1,x1,1);
+        ADD(x2,x1,x0);
+        ADD(x3,x1,x2);
+        SRLI(x3,x3,3);
+        SLLI(x3,x3,31);
+        SRAI(x3,x3,5);
+        SRLI(x1,x3,26);
+        EBREAK();
     end
 
     reg [31:0] RegisterBank [0:31];
@@ -107,16 +92,26 @@ module risc_v (
     always @(posedge clk) begin
         case(state)
             FETCH_INSTR: begin
-                instr <= MEM[PC];
+                `ifdef BENCH
+                    $display("Fetch instruction");
+                `endif
+                // ignore the 2 least significant bits as instructions are word aligned
+                instr <= MEM[PC[31:2]];
                 state <= FETCH_REGS;
             end
             FETCH_REGS: begin
+                `ifdef BENCH
+                    $display("Fetch Registers");
+                `endif
                 rs1 <= RegisterBank[rs1Id];
                 rs2 <= RegisterBank[rs2Id];
                 state <= EXECUTE;
             end
             EXECUTE: begin
-                PC <= PC + 1;
+                `ifdef BENCH
+                    $display("Execute Instruction");
+                `endif
+                PC <= PC + 4;
                 state <= FETCH_INSTR;
             end
         endcase

@@ -61,25 +61,28 @@ module risc_v (
     wire clk;    // internal clock
 
     `include "../riscv_assembly.v"
+    integer L0_=4;
     initial begin
-        ADD(x0,x0,x0);
-        ADD(x1,x0,x0);
-        ADDI(x1,x1,1);
-        ADDI(x1,x1,1);
-        ADDI(x1,x1,1);
-        ADDI(x1,x1,1);
-        ADD(x2,x1,x0);
-        ADD(x3,x1,x2);
-        SRLI(x3,x3,3);
-        SLLI(x3,x3,31);
-        SRAI(x3,x3,5);
-        SRLI(x1,x3,26);
-        EBREAK();
+            ADD(x1,x0,x0);
+        Label(L0_);
+            ADDI(x1,x1,1);
+            JAL(x0,LabelRef(L0_));
+            EBREAK();
+            endASM();
     end
 
     reg [31:0] RegisterBank [0:31];
-    wire [31:0] writeBackData = 0;
-    wire writeBackEn = 0;
+    `ifdef BENCH   
+        integer     i;
+        initial begin
+            for(i=0; i<32; ++i) begin
+            RegisterBank[i] = 0;
+            end
+        end
+    `endif  
+
+    wire [31:0] writeBackData;
+    wire writeBackEn;
     reg [31:0] rs1;
     reg [31:0] rs2;
 
@@ -89,38 +92,42 @@ module risc_v (
     localparam EXECUTE     = 2;
     reg [1:0] state = FETCH_INSTR;
 
+    wire[31:0] nextPC = isJAL ? PC+Jimm :
+                        isJALR ? rs1+Iimm : 
+                        PC + 4;
+
+    assign writeBackData = (isJAL || isJALR) ? (PC+4) : aluOut;
+    assign writeBackEn = (state == EXECUTE && 
+        (isALUreg ||
+         isALUimm ||
+         isJAL    ||
+         isJALR)
+        );
+
     always @(posedge clk) begin
+        if (writeBackEn && rdId != 0) begin // register 0 can never be written to in risc-v
+            `ifdef BENCH
+                $display("Write Back");
+            `endif
+            RegisterBank[rdId] <= writeBackData;
+        end
+
         case(state)
             FETCH_INSTR: begin
-                `ifdef BENCH
-                    $display("Fetch instruction");
-                `endif
                 // ignore the 2 least significant bits as instructions are word aligned
                 instr <= MEM[PC[31:2]];
                 state <= FETCH_REGS;
             end
             FETCH_REGS: begin
-                `ifdef BENCH
-                    $display("Fetch Registers");
-                `endif
                 rs1 <= RegisterBank[rs1Id];
                 rs2 <= RegisterBank[rs2Id];
                 state <= EXECUTE;
             end
             EXECUTE: begin
-                `ifdef BENCH
-                    $display("Execute Instruction");
-                `endif
-                PC <= PC + 4;
+                PC <= nextPC;
                 state <= FETCH_INSTR;
             end
         endcase
-    end
-
-    always @(posedge clk) begin
-        if (writeBackEn && rdId != 0) begin // register 0 can never be written to in risc-v
-            RegisterBank[rdId] <= writeBackData;
-        end
     end
 
     // ALU code
@@ -130,7 +137,7 @@ module risc_v (
     wire [4:0] shamt = isALUreg ? rs2[4:0] : instr[24:20]; // shift amount
     always @(*) begin
         case (funct3)
-            3'b000: aluOut = (funct7[5] & instr[5]) ? (aluIn1 - aluIn2) : (aluIn1+aluIn2);
+            3'b000: aluOut = (funct7[5] & instr[5]) ? (aluIn1-aluIn2) : (aluIn1+aluIn2);
             3'b001: aluOut = aluIn1 << shamt;
             3'b010: aluOut = ($signed(aluIn1) < $signed(aluIn2));
             3'b011: aluOut = (aluIn1 < aluIn2);
@@ -141,8 +148,24 @@ module risc_v (
         endcase
     end
 
-    assign writeBackData = aluOut;
-    assign writeBackEn = (state == EXECUTE && (isALUreg || isALUimm));
+    `ifdef BENCH   
+        always @(posedge clk) begin
+            $display("PC=%0d",PC);
+             $display("x1=%0d",RegisterBank[1]);
+            case (1'b1)
+                isALUreg: $display("ALUreg rd=%d rs1=%d rs2=%d funct3=%b",rdId, rs1Id, rs2Id, funct3);
+                isALUimm: $display("ALUimm rd=%d rs1=%d imm=%0d funct3=%b",rdId, rs1Id, Iimm, funct3);
+                isBranch: $display("BRANCH");
+                isJAL:    $display("JAL");
+                isJALR:   $display("JALR");
+                isAUIPC:  $display("AUIPC");
+                isLUI:    $display("LUI");	
+                isLoad:   $display("LOAD");
+                isStore:  $display("STORE");
+                isSYSTEM: $display("SYSTEM");
+            endcase 
+        end
+    `endif
 
     assign LED = state[0];
 

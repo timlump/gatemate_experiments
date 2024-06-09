@@ -61,12 +61,13 @@ module risc_v (
     wire clk;    // internal clock
 
     `include "../riscv_assembly.v"
-    integer L0_=4;
+    integer L0_=8;
     initial begin
             ADD(x1,x0,x0);
-        Label(L0_);
-            ADDI(x1,x1,1);
-            JAL(x0,LabelRef(L0_));
+            ADDI(x2,x0,32);
+        Label(L0_); 
+            ADDI(x1,x1,1); 
+            BNE(x1, x2, LabelRef(L0_));
             EBREAK();
             endASM();
     end
@@ -92,10 +93,6 @@ module risc_v (
     localparam EXECUTE     = 2;
     reg [1:0] state = FETCH_INSTR;
 
-    wire[31:0] nextPC = isJAL ? PC+Jimm :
-                        isJALR ? rs1+Iimm : 
-                        PC + 4;
-
     assign writeBackData = (isJAL || isJALR) ? (PC+4) : aluOut;
     assign writeBackEn = (state == EXECUTE && 
         (isALUreg ||
@@ -103,6 +100,43 @@ module risc_v (
          isJAL    ||
          isJALR)
         );
+
+    // ALU code
+    wire [31:0] aluIn1 = rs1;
+    wire [31:0] aluIn2 = isALUreg ? rs2 : Iimm;
+    reg [31:0] aluOut;
+    wire [4:0] shamt = isALUreg ? rs2[4:0] : instr[24:20]; // shift amount
+    always @(*) begin
+        case (funct3)
+            3'b000: aluOut = (funct7[5] & instr[5]) ? (aluIn1-aluIn2) : (aluIn1+aluIn2);
+            3'b001: aluOut = aluIn1 << shamt;
+            3'b010: aluOut = ($signed(aluIn1) < $signed(aluIn2));
+            3'b011: aluOut = (aluIn1 < aluIn2);
+            3'b100: aluOut = (aluIn1 ^ aluIn2);
+            3'b101: aluOut = funct7[5]? ($signed(aluIn1) >>> shamt) : (aluIn1 >> shamt);
+            3'b110: aluOut = (aluIn1 | aluIn2);
+            3'b111: aluOut = (aluIn1 & aluIn2);
+        endcase
+    end
+
+    // brancing code
+    reg takeBranch;
+    always @(*) begin
+        case(funct3)
+            3'b000: takeBranch = (rs1 == rs2);
+            3'b001: takeBranch = (rs1 != rs2);
+            3'b100: takeBranch = ($signed(rs1) < $signed(rs2));
+            3'b101: takeBranch = ($signed(rs1) >= $signed(rs2));
+            3'b110: takeBranch = (rs1 < rs2);
+            3'b110: takeBranch = (rs1 >= rs2);
+            default: takeBranch = 1'b0;
+        endcase
+    end
+
+    wire[31:0] nextPC = (isBranch && takeBranch) ? PC+Bimm :
+                        isJAL ? PC+Jimm :
+                        isJALR ? rs1+Iimm : 
+                        PC + 4;
 
     always @(posedge clk) begin
         if (writeBackEn && rdId != 0) begin // register 0 can never be written to in risc-v
@@ -127,24 +161,6 @@ module risc_v (
                 PC <= nextPC;
                 state <= FETCH_INSTR;
             end
-        endcase
-    end
-
-    // ALU code
-    wire [31:0] aluIn1 = rs1;
-    wire [31:0] aluIn2 = isALUreg ? rs2 : Iimm;
-    reg [31:0] aluOut;
-    wire [4:0] shamt = isALUreg ? rs2[4:0] : instr[24:20]; // shift amount
-    always @(*) begin
-        case (funct3)
-            3'b000: aluOut = (funct7[5] & instr[5]) ? (aluIn1-aluIn2) : (aluIn1+aluIn2);
-            3'b001: aluOut = aluIn1 << shamt;
-            3'b010: aluOut = ($signed(aluIn1) < $signed(aluIn2));
-            3'b011: aluOut = (aluIn1 < aluIn2);
-            3'b100: aluOut = (aluIn1 ^ aluIn2);
-            3'b101: aluOut = funct7[5]? ($signed(aluIn1) >>> shamt) : (aluIn1 >> shamt);
-            3'b110: aluOut = (aluIn1 | aluIn2);
-            3'b111: aluOut = (aluIn1 & aluIn2);
         endcase
     end
 

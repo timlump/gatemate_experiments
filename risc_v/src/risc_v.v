@@ -93,12 +93,17 @@ module risc_v (
     localparam EXECUTE     = 2;
     reg [1:0] state = FETCH_INSTR;
 
-    assign writeBackData = (isJAL || isJALR) ? (PC+4) : aluOut;
+    assign writeBackData = (isJAL || isJALR) ? (PC+4) :
+                           (isLUI) ? Uimm :
+                           (isAUIPC) ? (PC + Uimm) :
+                           aluOut;
     assign writeBackEn = (state == EXECUTE && 
         (isALUreg ||
          isALUimm ||
          isJAL    ||
-         isJALR)
+         isJALR   ||
+         isLUI    ||
+         isAUIPC)
         );
 
     // ALU code

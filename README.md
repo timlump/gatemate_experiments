@@ -4,7 +4,7 @@
 
 Status: Incomplete
 
-Based on https://github.com/BrunoLevy/learn-fpga/blob/master/FemtoRV/TUTORIALS/FROM_BLINKER_TO_RISCV/README.md
+Based on https://github.com/BrunoLevy/learn-fpga/blob/master/FemtoRV/TUTORIALS/FROM_BLINKER_TO_RISCV/README.md and https://github.com/fm4dd/gatemate-riscv
 
 Assumes you have the olimex gatemate evaluation board:
 https://www.olimex.com/Products/FPGA/GateMate/GateMateA1-EVB/open-source-hardware
